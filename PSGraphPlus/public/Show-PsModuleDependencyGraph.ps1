@@ -21,7 +21,7 @@ function Show-PsModuleDependencyGraph
     process
     {
 
-        $module = Get-Module $Name -ListAvailable
+        $module = Get-ChildModule $Name -Recurse
 
         if ( $null -eq $module ) { return }
 
@@ -29,7 +29,7 @@ function Show-PsModuleDependencyGraph
             Node @{shape = 'box'}
 
             Node $module -NodeScript {$_.name} @{
-                label = {'{0}' -f $_.Name}
+                label = {'{0}\n{1}' -f $_.Name,$_.Description}
             }
 
             $EdgeParam = @{
@@ -45,3 +45,48 @@ function Show-PsModuleDependencyGraph
 
     }
 }
+
+function Get-ChildModule {
+    [CmdletBinding()]
+    param (
+        [Parameter(
+            Position=0,
+            ValueFromPipeline,
+            ValueFromRemainingArguments,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('ModuleName','Name')]
+        [string[]]
+        $Module,
+
+        [switch]
+        $Recurse
+    )
+    
+    begin {
+        
+    }
+    
+    process {
+
+        foreach ($item in $Module) {
+
+            $Children = (
+                Get-Module $item -ListAvailable
+            ).RequiredModules.Name
+
+            if ($Recurse) {
+                foreach ($child in $Children) {
+                    Get-ChildModule $child -Recurse
+                }
+            }
+
+        }
+
+    }
+    
+    end {
+        
+    }
+
+}#END: function Get-ChildModule
