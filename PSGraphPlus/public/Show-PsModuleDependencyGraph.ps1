@@ -29,7 +29,7 @@ function Show-PsModuleDependencyGraph
             Node @{shape = 'box'}
 
             Node $module -NodeScript {$_.name} @{
-                label = {'{0}\n{1}' -f $_.Name,$_.Description}
+                label = {'{0}\n{1}\n{2}' -f $_.Name,,$_.Description}
             }
 
             $EdgeParam = @{
@@ -60,33 +60,55 @@ function Get-ChildModule {
         $Module,
 
         [switch]
-        $Recurse
+        $Recurse,
+
+        # Also returns the module info for the given Module(s)
+        [switch]
+        $IncludeParent
     )
-    
+
     begin {
-        
+        # $ColumnOrder = @(
+        #     'Name'
+        #     'Version'
+        #     'Path'
+        #     'Guid'
+        #     'ModuleBase'
+        #     'Tags'
+        #     'ProjectUri'
+        #     'Author'
+        #     'RequiredModules'
+        # )
     }
-    
+
     process {
 
         foreach ($item in $Module) {
 
+            if ($IncludeParent) {
+                Get-Module $item
+            }
+
             $Children = (
                 Get-Module $item -ListAvailable
             ).RequiredModules.Name
+            
+            foreach ($child in $Children) {
 
-            if ($Recurse) {
-                foreach ($child in $Children) {
+                Get-Module $Child
+
+                if ($Recurse) {
                     Get-ChildModule $child -Recurse
                 }
+
             }
 
         }
 
     }
-    
+
     end {
-        
+
     }
 
 }#END: function Get-ChildModule
