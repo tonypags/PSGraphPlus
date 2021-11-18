@@ -21,21 +21,21 @@ function Show-PsModuleDependencyGraph
     process
     {
 
-        $module = Get-ChildModule $Name -Recurse
+        $module = Get-ChildModule $Name -Recurse -IncludeParent
 
         if ( $null -eq $module ) { return }
 
-        $graph = graph modules  @{rankdir = 'LR'; pack = 'true'} {
+        $graph = graph modules  @{pack = 'true'} {
             Node @{shape = 'box'}
 
-            Node $module -NodeScript {$_.name} @{
-                label = {'{0}\n{1}\n{2}' -f $_.Name,,$_.Description}
+            Node $module -NodeScript {$_.Guid} @{
+                label = {'{0}\n{1}\n{2}' -f $_.Name,$_.Version,$_.Description}
             }
 
             $EdgeParam = @{
                 Node       = $module | Where-Object {$_.RequiredModules}
-                FromScript = {$_.Name}
-                ToScript   = {$_.RequiredModules.Name}
+                FromScript = {$_.RequiredModules.Guid}
+                ToScript   = {$_.Guid}
             }
             Edge @EdgeParam
 
